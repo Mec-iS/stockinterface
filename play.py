@@ -51,13 +51,11 @@ class Play(StockFighter):
     @asyncio.coroutine
     def hit_endpoint(self, caller, mode):
         """
-        Coroutine to fetch the endpopint
+        Coroutine to fetch the endpoint
         :param apimodels.Endpoint:
         :param tornado.httpclient.AsyncHTTPClient http_client:
         :return None: set `response` attribute in the calling class
         """
-        print('fetching heartbeat')
-
         response = yield from fetch(
             self.http_client,
             caller.url
