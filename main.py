@@ -20,30 +20,3 @@ action = "buy"
 q = 100000  # shares
 # Company: BrainIdea Corp.
 company = "IFZI"
-
-from levelmodels import Level, Action
-
-level = Level(account)
-level.start_level_loop()
-
-qty = 0
-while qty < q+1:
-    ask1 = Action(
-        account,
-        venue=venue,
-        direction=action,
-        qty=1000,
-        stock=company
-    )
-
-    prices = tuple(a['price'] for a in ask1.book.get_asks_and_bids())
-    import time
-    time.sleep(0.5)
-
-    price = (max(prices) + max(prices)/100 * 5)
-    print(price)
-    time.sleep(1)
-
-    ask1.perform_transaction('limit', price)
-
-level.stop_level_loop()
