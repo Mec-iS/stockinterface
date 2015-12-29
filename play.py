@@ -2,11 +2,11 @@
 """
 Levels playing module
 """
-import asyncio
 import json
 from time import time
+import concurrent.futures
 
-from async_client import fetch
+from client import _request, _response
 
 __author__ = 'Lorenzo'
 
@@ -20,81 +20,95 @@ class Play:
     def __init__(self):
         # to be set pointing to the running loop when started
         # see self.start_play_loop()
-        self.play_loop = None
+        self.play = 'on'
 
-        # players get a user account number at the beginning of each level
-        from tornado.platform.asyncio import AsyncIOMainLoop
-
-        # Tell Tornado to use the asyncio eventloop
-        AsyncIOMainLoop().install()
-
-        self.start_play_loop()
-
-    def start_play_loop(self):
-
-        # get the loop policy
-        loop = asyncio.get_event_loop()
-        loop.set_debug(True)
-
-        # start the loop and inject coroutine
-        loop.run_forever()
-
-        setattr(self, 'play_loop', loop)
-
-    def stop_play_loop(self):
-        self.play_loop.stop()
-        setattr(self, 'play_loop', None)
-
-    @asyncio.coroutine
-    def hit_endpoint(self, url, data=None, caller=None, attr=None):
+    @classmethod
+    def hit_endpoint(cls, url, caller=None, attr=None):
         """
-        Coroutine invoked to fetch the endpoint.
+        Fetch a single url for a resource.
 
-        :param str url: url to be hit
-        :param JSON data: POST data if needed
+        :param Request url: request to the url to be hit
         :param object caller: the object requiring the data and in which the
                response's body will be stored
         :param str attr: the attribute's name from the caller in which the
                response's body will be stored
         :return dict: response's body
         """
-        # fetch using `async_client`
-        response = yield from fetch(
-            url,
-            data=data
-        )
-        read = response.body.decode()
-        read = json.loads(read)
+        # fetch using `client`
+        try:
+            body, _ = _response(_request(url))
+        except ConnectionError as e:
+            raise e
+        except ValueError as e:
+            raise e
+
+        read = json.loads(body)
         print(read)
-        if not read["ok"]:
-            raise ValueError('play.hit_endpoint(). "ok" value is false,'
-                             'there is an error in the response: ' + str(read["error"]))
 
-        # set the attribute to store the result in the caller,
-        # using different methods depending on attribute's type.
-        # #todo: to be moved in a 'response receiving' method in the caller or
-        # #todo: should emit an event to caller's listener
-        if caller and attr:
-            to_set = getattr(caller, attr)
-            {
-                'list': to_set.append(time(), read),
-                'dict': setattr(caller, attr, read),
-                'NoneType': setattr(caller, attr, read)
-            }.get(
-                type(getattr(caller, attr)).__name__
-            )
+        cls.store_response(caller, attr, read)
 
-    def dispatch(self, caller, url, attr=None, payload=None):
+        return read
+
+    @classmethod
+    def run_async_executor(cls, queue, caller, attr):
+        """
+        Run multiple _response functions in a queue using a ThreadPoolExecutor.
+
+        :param list queue: a list of Request(s)
+        :return: bool
+        """
+        from urllib.request import Request
+        assert isinstance(queue, list)
+        assert all(isinstance(q, Request) for q in queue)
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+            # Start the load operations and mark each future with its URL
+            future_to_url = {
+                executor.submit(_response(req)): req.get_full_url()
+                for req in queue
+            }
+            for future in concurrent.futures.as_completed(future_to_url):
+                url = future_to_url[future]
+                try:
+                    data = future.result()
+                    read = json.loads(data)
+                    cls.store_response(caller, attr, read)
+                except Exception as exc:
+                    print('%r generated an exception: %s' % (url, exc))
+                    return False
+                else:
+                    print('%r page is %d bytes' % (url, len(data)))
+                    return False
+
+        return True
+
+    @classmethod
+    def dispatch(cls, caller, url, attr=None):
         """
         Collect the request and add the coroutine to the loop.
 
         :param object caller: the object requiring the data and in which the
                         response's body will be stored
-        :param str url: url to be hit
+        :param Request url: Request to be fulfilled or a list of Request(s)
         :param str attr: the attribute's name from the caller in which the
                         response's body will be stored
-        :param JSON payload: a JSON string with the POST payload
         """
-        yield from self.play_loop.create_task(
-            self.hit_endpoint(url, payload, caller, attr)
-        )
+        return {
+            'list': cls.run_async_executor(url, caller, attr),
+            'str': cls.hit_endpoint(url, caller, attr)
+        }.get(str(type(url)))
+
+    @classmethod
+    def store_response(cls, body, caller, attr):
+        # set the attribute to store the result in the caller,
+        # using different methods depending on attribute's type.
+        # #todo: to be moved in a 'response receiving' method in the caller or
+        # #todo: should emit an event to caller's listener
+        if caller and attr:
+            {
+                'list': getattr(caller, attr).append(time(), body),
+                'dict': setattr(caller, attr, body),
+                'NoneType': setattr(caller, attr, body)
+            }.get(
+                type(getattr(caller, attr)).__name__
+            )
