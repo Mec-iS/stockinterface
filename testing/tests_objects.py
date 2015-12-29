@@ -7,6 +7,8 @@ from unittest import mock
 
 __author__ = 'Lorenzo'
 
+
+global play_loop
 # (account, venue, stock)
 tests = [
     ('YCH86804436', 'SSDX', 'PMI'),
@@ -14,7 +16,7 @@ tests = [
     ('RTS86811456', 'DTEX', 'RTY')
 ]
 
-from game import Agent, Order
+from game import Agent, OrdersBook, Order
 class Test_Agent_Order(unittest.TestCase):
     tests = tests
     fake_order = {
@@ -26,8 +28,9 @@ class Test_Agent_Order(unittest.TestCase):
     }
 
     def setUp(self):
-        self.agent = Agent(self.tests[0][0], self.tests[0][1])
-        self.order = Order(self.agent, **self.fake_order)
+        self.agent = agent =  Agent(self.tests[0][0], self.tests[0][1])
+        self.orders_book = orders_book = OrdersBook(agent)
+        self.order = Order(orders_book)
 
     def test_should_create_agent(self):
         print(self.agent)

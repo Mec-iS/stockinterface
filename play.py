@@ -17,9 +17,7 @@ class Play:
     begins by invoking the `game.OrdersBook` constructor.
 
     """
-    def __init__(self, agent):
-        # Unique account assigned by level's instruction
-        self.agent = agent
+    def __init__(self):
         # to be set pointing to the running loop when started
         # see self.start_play_loop()
         self.play_loop = None

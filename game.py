@@ -60,11 +60,7 @@ class OrdersBook:
         self.account = agent.account
         self.venue = agent.venue
 
-        # basic attributes are set, start the play loop
-        play = Play(self.agent)
-        self.play_loop = play.play_loop
-
-        #
+        # general venue's info
         self.listed = None          # response from VenueList.url
         self.orders = []            # response from Stocks.orders_by_stock
 
@@ -75,7 +71,7 @@ class OrdersBook:
         self.orders_failed = []     # orders failed
 
         # load the stocks list
-        self.list_stocks()
+        #self.list_stocks()
 
     def list_stocks(self):
         """List the stocks available for trading on a venue and store them in
@@ -86,7 +82,7 @@ class OrdersBook:
         ).url
 
         # send to dispatcher
-        self.play_loop.dispatch(
+        Play().dispatch(
             caller=self,
             url=endpoint,
             attr='listed')
@@ -154,7 +150,6 @@ class Order:
         self.agent = orders_book.agent
         self.venue = orders_book.venue
         self.account = orders_book.account
-        self.play_loop = orders_book.play_loop
 
         # to be set when the order is 'cooked'
         self.order_payload = None
@@ -182,7 +177,7 @@ class Order:
         ).orders_by_stock
 
         # send to dispatcher
-        self.play_loop.dispatch(
+        Play().dispatch(
             caller=self.orders_book,     # we want to store this data in orders book
             url=endpoint,
             attr='orders')
