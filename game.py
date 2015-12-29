@@ -1,17 +1,12 @@
 # coding=utf-8
+
+from play import Play
+from endpoints import VenueList, Stocks
+
 __author__ = 'Lorenzo'
 
 
-class StockFighter:
-    """
-    General class for the game.
-
-    <https://starfighter.readme.io/docs/getting-started>
-    """
-    pass
-
-
-class Agent(StockFighter):
+class Agent:
     """
     The agent for each account/venue pair. The player plays with a given
     account number for a given venue.
@@ -19,7 +14,7 @@ class Agent(StockFighter):
     def __init__(self, account, venue):
         self.account = account    # the account number
         self.venue = venue        # the venue
-        self.log = ()             # log of completed transactions
+        self.log = []             # log of completed transactions
 
     def __str__(self):
         return "{__class__.__name__}: {account!r}, working in {venue!r}".format(
@@ -36,7 +31,7 @@ class Agent(StockFighter):
         )
 
 
-class OrdersBook(StockFighter):
+class OrdersBook:
     """
     A statefull class to store the state of the stock market in a given level and
     in a given venue.
@@ -53,35 +48,83 @@ class OrdersBook(StockFighter):
         always gets matched before a worse price, with ties getting broken by timestamp
         of the order.
     """
-    def __init__(self):
-        # set by Endpoint.VenueOrderBook
-        self.listed = None
-        self.orders = dict()
+    def __init__(self, agent):
+
+        # set basic attributes for the (venue, agent) operations
+        self.agent = agent
+        self.account = agent.account
+        self.venue = agent.venue
+
+        # basic attributes are set, start the play loop
+        play = Play(self.agent)
+        self.play_loop = play.play_loop
+
+        #
+        self.listed = None          # response from VenueList.url
+        self.orders = []            # response from Stocks.orders_by_stock
+
         # set by self.Order
-        self.orders_sent = []
+        self.orders_queued = []    # orders processing
+        self.orders_sent = []       # orders sent
+        self.orders_completed = []   # orders accepted
+        self.orders_failed = []     # orders failed
+
+        # load the stocks list
+        self.list_stocks()
 
     def list_stocks(self):
         """List the stocks available for trading on a venue and store them in
-    __class__.listed"""
-        key = 'list_stocks'
+    self.listed"""
+        # find the right endpoint URL
+        endpoint = VenueList(
+            venue=self.venue
+        ).url
 
-        def _perform(self):
-            self.url = self.modes[key]
-            self.level.get(self, key)
-            return self.listed
+        # send to dispatcher
+        self.play_loop.dispatch(
+            caller=self,
+            url=endpoint,
+            attr='listed')
 
-    def orders_by_stock(self):
-        """List buy and sell offers in the order book for the given stock."""
+    def _build_order_data(self, order):
+        """Build request's data to perform a ask/bid action, data is taken from
+        the Order's constructor."""
+        import json
 
-        results = {}
-        self.orders['stock'] = results
+        post_data = {
+            "account": self.account,
+            "venue": self.venue
+        }
+        post_data.update(order.order_payload)
+
+        return json.dumps(post_data)
+
+    def place_order(self, order):
+        """Build and send an order via the async loop. Create an Endpoint instance,
+        """
+        print(repr(self) + " is passed to Dispatcher")
+        # find the right endpoint URL
+        endpoint = Stocks(
+            stock=order.order_payload['stock'],
+            venue=order.order_payload['venue']
+        ).submit_order
+        # send to dispatcher
+        self.play_loop.dispatch(
+            caller=self,
+            url=endpoint,
+            attr=None,
+            payload=self._build_order_data(order)
+        )
+
+        # add order to sent orders in the orders books
+        setattr(self, 'orders_sent', order)
 
 
-class Order(OrdersBook):
+class Order:
     """A stateless class for operations on the orders book."""
     params = ('stock', 'qty', 'direction', 'price', 'orderType',)
 
-    def __init__(self, agent, **kwargs):
+    def __init__(self, orders_book, **kwargs):
         """
         Construct a order to be sent.
 
@@ -100,15 +143,16 @@ class Order(OrdersBook):
         :param kwargs: a dictionary with keys as expressed in `self.params`
         :return:
         """
-        super().__init__()
-        self.agent = agent
-        self.account = agent.account
-        self.venue = agent.venue
-        if all(kwargs.get(k) for k in self.params):
-            self.final_order = kwargs
-        else:
-            raise ValueError('Dispatch._build_data():'
-                             'Missing needed argument: %s.' % (self.params, ))
+        assert isinstance(orders_book, OrdersBook)
+
+        self.orders_book = orders_book
+        self.agent = orders_book.agent
+        self.venue = orders_book.venue
+        self.account = orders_book.account
+        self.play_loop = orders_book.play_loop
+
+        # to be set when the order is 'cooked'
+        self.order_payload = None
 
     def __str__(self):
         return "{__class__.__name__}: {id!r} created by {agent!r}".format(
@@ -124,23 +168,24 @@ class Order(OrdersBook):
             id=id(self)
         )
 
-    def _build_data(self):
-        """Build request's data to perform a ask/bid action."""
-        import json
+    def orders_by_stock(self):
+        """List buy and sell offers in the order book for the given stock."""
+        # find the right endpoint URL
+        endpoint = Stocks(
+            venue=self.venue,
+            stock=self.order_payload["stock"]
+        ).orders_by_stock
 
-        post_data = {
-            "account": self.account,
-            "venue": self.venue
-        }
-        post_data.update(self.final_order)
+        # send to dispatcher
+        self.play_loop.dispatch(
+            caller=self.orders_book,     # we want to store this data in orders book
+            url=endpoint,
+            attr='orders')
 
-        return json.dumps(post_data)
+    def cook_order(self, **kwargs):
+        assert all(kwargs.get(k) for k in self.params)
+        setattr(self, 'order_payload', kwargs)
 
-    def place_order(self):
-        """Build and send an order via the async loop. Create an Endpoint instance,
-        """
-        import time
-        print(repr(self) + " is passed to Dispatcher")
-        self.orders_sent.append((time.time(), self))
-        pass
+
+
 
