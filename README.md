@@ -7,3 +7,6 @@ To have an idea of what is going on, from the root directory:
 ```
 python testing/tests_objects.py
 ```
+
+## TO-DO:
+* Write tests! (:
