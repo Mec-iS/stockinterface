@@ -1,5 +1,7 @@
 # coding=utf-8
-
+"""
+A module holding the cocepts invovled in the game: agent, orders' book, order
+"""
 from play import Play
 from endpoints import VenueList, Stocks
 

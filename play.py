@@ -1,6 +1,6 @@
 # coding=utf-8
 """
-Levels playing module
+A module is for I/O with the Web.
 """
 import json
 from time import time
@@ -13,9 +13,7 @@ __author__ = 'Lorenzo'
 
 class Play:
     """
-    General class for playing loop. An instance is started when a level/game
-    begins by invoking the `game.OrdersBook` constructor.
-
+    A stateless class for dispatching requests.
     """
     def __init__(self):
         # to be set pointing to the running loop when started
