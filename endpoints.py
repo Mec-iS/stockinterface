@@ -2,11 +2,11 @@
 """
 General model and endpoints models
 """
-from game import StockFighter
+
 __author__ = 'Lorenzo'
 
 
-class Endpoint(StockFighter):
+class Endpoint:
     """
     General class for endpoints. Each subclass represents
     a specific method for each endpoint.
@@ -68,12 +68,26 @@ class VenueHeartBeat(Endpoint):
         self.url = self.base_url + "venues/{}/heartbeat".format(venue)
 
 
-class Stocks(Endpoint):
+class VenueList(Endpoint):
     """
-    Endpoint:
+    Endpoint: Get all the stocks listed in a venue
+
+    Method: GET
+
+    Documentation:
         * list stocks: "venues/TESTEX/stocks/"
           GET: [{ "name": "ABC Co", "symbol": "ABC" },
                { "name": "DFE Inc", "symbol": "DFE" }, ...]
+    """
+    def __init__(self, venue):
+        super().__init__()
+        self.venue = venue
+        self.url = ('list_stocks', 'GET', self.base_url + 'venues/{}/stocks/'.format(self.venue), )
+
+
+class Stocks(Endpoint):
+    """
+    Endpoint:
         * list offers for a stock and buy/sell stocks: "venues/TESTEX/stocks/FOOBAR"
           GET: {"ok": true, "venue": "BBBBEX",
                 "symbol": "ORI","ts": "2015-12-23T13:53:51.517565036Z",
@@ -159,7 +173,7 @@ class Stocks(Endpoint):
         stock: String FOOBAR
         price: Integer Desired price (an integer: $53.42 becomes 5342)
         qty: Integer Desired quantity
-        direction: String Whether you want to "buy" or "sell"
+        direction: String Whether you want to "buy" (bid) or "sell" (ask)
         orderType: String The order type
 
     Order types:
@@ -190,7 +204,6 @@ class Stocks(Endpoint):
         self.stock = stock
 
         self.actions = (
-            ('list_stocks', 'GET', self.base_url + 'venues/{}/stocks/'.format(self.venue), ),
             ('orders_by_stock', 'GET', self.base_url + 'venues/{}/stocks/{}'.format(self.venue, self.stock), ),
             ('submit_order', 'POST', self.base_url + 'venues/{}/stocks/{}/orders'.format(self.venue, self.stock), ),
             ('get_quote', 'GET', self.base_url + 'venues/{}/stocks/{}/quote'.format(self.venue, self.stock), ),
