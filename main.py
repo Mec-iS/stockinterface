@@ -56,10 +56,7 @@ order_data["price"] = price
 # fill order payload
 order.cook_order(**order_data)
 # dispatch the order
-result = book.place_order(order)  # result can be 'shipped', 'queued' or 'rejected'
+result = book.place_order(order)
 
-# update the OrderBook()
+# update the OrderBook() with the new prices
 current_orders = order.orders_by_stock()
-
-# stop the loop
-book.play_loop.stop_play_loop()
