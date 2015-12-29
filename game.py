@@ -110,10 +110,9 @@ class OrdersBook:
             venue=order.order_payload['venue']
         ).submit_order
         # send to dispatcher
-        self.play_loop.dispatch(
+        Play().dispatch(
             caller=self,
             url=endpoint,
-            attr=None,
             payload=self._build_order_data(order)
         )
 

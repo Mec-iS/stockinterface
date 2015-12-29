@@ -84,7 +84,7 @@ class Play:
                 type(getattr(caller, attr)).__name__
             )
 
-    def dispatch(self, caller, url, attr, payload=None):
+    def dispatch(self, caller, url, attr=None, payload=None):
         """
         Collect the request and add the coroutine to the loop.
 
