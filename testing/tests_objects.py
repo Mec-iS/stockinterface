@@ -14,7 +14,7 @@ tests = [
     ('RTS86811456', 'DTEX', 'RTY')
 ]
 
-
+from game import Agent, Order
 class Test_Agent_Order(unittest.TestCase):
     tests = tests
     fake_order = {
@@ -26,7 +26,6 @@ class Test_Agent_Order(unittest.TestCase):
     }
 
     def setUp(self):
-        from game import Agent, Order
         self.agent = Agent(self.tests[0][0], self.tests[0][1])
         self.order = Order(self.agent, **self.fake_order)
 
@@ -46,37 +45,42 @@ class Test_Agent_Order(unittest.TestCase):
         del self.order
 
 
+from endpoints import APIHeartBeat
 class Test_Enpoint_APIHeartBeat(unittest.TestCase):
     def setUp(self):
-        from endpoints import APIHeartBeat
+
         self.endpoint = APIHeartBeat()
 
     def test_should_create_endpoint(self):
         print(self.endpoint)
+        assert isinstance(self.endpoint, APIHeartBeat)
+        assert self.endpoint.url == 'https://api.stockfighter.io/ob/api/heartbeat'
 
     def tearDown(self):
         del self.endpoint
 
 
+from endpoints import VenueHeartBeat
 class Test_Enpoint_VenueHeartBeat(unittest.TestCase):
     tests = tests
 
     def setUp(self):
-        from endpoints import VenueHeartBeat
         self.endpoint = VenueHeartBeat(tests[0][1])
 
     def test_should_create_endpoint(self):
         print(self.endpoint)
+        assert isinstance(self.endpoint, VenueHeartBeat)
+        assert self.endpoint.url == 'https://api.stockfighter.io/ob/api/venues/SSDX/heartbeat'
 
     def tearDown(self):
         del self.endpoint
 
 
+from endpoints import Stocks
 class Test_Enpoint_Stocks(unittest.TestCase):
     tests = tests
 
     def setUp(self):
-        from endpoints import Stocks
         self.endpoint = Stocks(
             venue=tests[0][1],
             stock=tests[0][2]
