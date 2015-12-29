@@ -1,5 +1,7 @@
 # coding=utf-8
 """
+NOT IMPLEMENTED
+
 An asynchronous client using Tornado-AsyncIO bridge:
 <http://www.tornadoweb.org/en/stable/asyncio.html>
 
