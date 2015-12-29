@@ -9,12 +9,13 @@ __author__ = 'Lorenzo'
 class Endpoint:
     """
     General class for endpoints. Each subclass represents
-    a specific method for each endpoint.
+    an endpoint with multiple URLs for different functions or
+    a specific function with a single `url`.
     """
     def __init__(self):
         # URL on which the different endpoints are based
         self.base_url = "https://api.stockfighter.io/ob/api/"
-        # The url actually in use (some endpoints may have different 'modes')
+        # The url actually in use (some endpoints may have different functions)
         self.url = None
 
         self.response = None
@@ -88,7 +89,8 @@ class VenueList(Endpoint):
 class Stocks(Endpoint):
     """
     Endpoint:
-        * list offers for a stock and buy/sell stocks: "venues/TESTEX/stocks/FOOBAR"
+      - Functions:
+        * orders_by_stock: list offers for a stock and buy/sell stocks: "venues/TESTEX/stocks/FOOBAR"
           GET: {"ok": true, "venue": "BBBBEX",
                 "symbol": "ORI","ts": "2015-12-23T13:53:51.517565036Z",
                 "bids": [
@@ -126,7 +128,7 @@ class Stocks(Endpoint):
                     }
                 ]
               }
-          * place an order (ask/bid)
+          * submit_order: place an order (ask/bid)
             POST: {
                       "ok": true,
                       "symbol": "FAC",
@@ -150,7 +152,7 @@ class Stocks(Endpoint):
                       "totalFilled": 80,
                       "open": true
                     }
-          * Get a quick look at the most recent trade information for a stock
+          * get_quote: get a quick look at the most recent trade information for a stock
             GET: {
                     "ok": true,
                     "symbol": "FAC",
@@ -167,7 +169,7 @@ class Stocks(Endpoint):
                     "quoteTime": "2015-07-13T05:38:17.33640392Z" // ts we last updated quote at (server-side)
                 }
 
-    Accepted parametersfor POST:
+    Accepted parameters for POST:
         account: String EXB123456
         venue: String TESTEX
         stock: String FOOBAR
@@ -233,52 +235,53 @@ class Stocks(Endpoint):
 class Orders(Endpoint):
     """
     Endpoint:
-      * Status For An Existing Order
-        GET: {
-              "ok": true,
-              "symbol": "ROBO",
-              "venue": "ROBUST",
-              "direction": "buy",
-              "originalQty": 85,
-              "qty": 40,
-              "price": 993,
-              "orderType": "immediate-or-cancel",
-              "id": 1,
-              "account": "FOO123",
-              "ts": "2015-08-10T16:10:32.987288+09:00",
-              "fills": [
-                {
-                  "price": 366,
-                  "qty": 45,
-                  "ts": "2015-08-10T16:10:32.987292+09:00"
+      Functions:
+          * order_status: Status For An Existing Order
+            GET: {
+                  "ok": true,
+                  "symbol": "ROBO",
+                  "venue": "ROBUST",
+                  "direction": "buy",
+                  "originalQty": 85,
+                  "qty": 40,
+                  "price": 993,
+                  "orderType": "immediate-or-cancel",
+                  "id": 1,
+                  "account": "FOO123",
+                  "ts": "2015-08-10T16:10:32.987288+09:00",
+                  "fills": [
+                    {
+                      "price": 366,
+                      "qty": 45,
+                      "ts": "2015-08-10T16:10:32.987292+09:00"
+                    }
+                  ],
+                  "totalFilled": 85,
+                  "open": true
                 }
-              ],
-              "totalFilled": 85,
-              "open": true
-            }
-      * Cancel An Order
-        GET: {
-              "ok": true,
-              "symbol": "ROBO",
-              "venue": "ROBUST",
-              "direction": "buy",
-              "originalQty": 85,
-              "qty": 0,  // note that qty will always be 0 for canceled orders
-              "price": 993,
-              "orderType": "immediate-or-cancel",
-              "id": 1,
-              "account": "FOO123",
-              "ts": "2015-08-10T16:10:32.987288+09:00",
-              "fills": [
-                {
-                  "price": 366,
-                  "qty": 45,
-                  "ts": "2015-08-10T16:10:32.987292+09:00"
+          * cancel_order: Cancel An Order
+            POST: {
+                  "ok": true,
+                  "symbol": "ROBO",
+                  "venue": "ROBUST",
+                  "direction": "buy",
+                  "originalQty": 85,
+                  "qty": 0,  // note that qty will always be 0 for canceled orders
+                  "price": 993,
+                  "orderType": "immediate-or-cancel",
+                  "id": 1,
+                  "account": "FOO123",
+                  "ts": "2015-08-10T16:10:32.987288+09:00",
+                  "fills": [
+                    {
+                      "price": 366,
+                      "qty": 45,
+                      "ts": "2015-08-10T16:10:32.987292+09:00"
+                    }
+                  ],
+                  "totalFilled": 85,
+                  "open": false
                 }
-              ],
-              "totalFilled": 85,
-              "open": false
-            }
     """
     def __init__(self, venue, stock, order_id):
         super().__init__()
@@ -308,64 +311,65 @@ class Orders(Endpoint):
 class Account(Endpoint):
     """
     Endpoint:
-      * Status For All Orders
-        GET: {
-              "ok": true,
-              "venue": "ROBUST",
-              "orders": [
-                {
-                  "symbol": "ROBO",
+      Functions:
+          * list_all_orders: Status For All Orders
+            GET: {
+                  "ok": true,
                   "venue": "ROBUST",
-                  "direction": "buy",
-                  "originalQty": 85,
-                  "qty": 40,
-                  "price": 993,
-                  "orderType": "immediate-or-cancel",
-                  "id": 1,
-                  "account": "FOO123",
-                  "ts": "2015-08-10T16:10:32.987288+09:00",
-                  "fills": [
+                  "orders": [
                     {
-                      "price": 366,
-                      "qty": 45,
-                      "ts": "2015-08-10T16:10:32.987292+09:00"
-                    }
-                  ],
-                  "totalFilled": 85,
-                  "open": true
-                },
-                ... // We'll show any number of orders.
-              ]
-            }
-      * Status For All Orders In A Stock
-        GET: {
-              "ok": true,
-              "venue": "ROBUST",
-              orders: [
-                {
-                  "symbol": "ROBO",
+                      "symbol": "ROBO",
+                      "venue": "ROBUST",
+                      "direction": "buy",
+                      "originalQty": 85,
+                      "qty": 40,
+                      "price": 993,
+                      "orderType": "immediate-or-cancel",
+                      "id": 1,
+                      "account": "FOO123",
+                      "ts": "2015-08-10T16:10:32.987288+09:00",
+                      "fills": [
+                        {
+                          "price": 366,
+                          "qty": 45,
+                          "ts": "2015-08-10T16:10:32.987292+09:00"
+                        }
+                      ],
+                      "totalFilled": 85,
+                      "open": true
+                    },
+                    ... // We'll show any number of orders.
+                  ]
+                }
+          * list_all_orders_by_stock: Status For All Orders In A Stock
+            GET: {
+                  "ok": true,
                   "venue": "ROBUST",
-                  "direction": "buy",
-                  "originalQty": 85,
-                  "qty": 40,
-                  "price": 993,
-                  "orderType": "immediate-or-cancel",
-                  "id": 1,
-                  "account": "FOO123",
-                  "ts": "2015-08-10T16:10:32.987288+09:00",
-                  "fills": [
+                  orders: [
                     {
-                      "price": 366,
-                      "qty": 45,
-                      "ts": "2015-08-10T16:10:32.987292+09:00"
-                    }
-                  ],
-                  "totalFilled": 85,
-                  "open": true
-                },
-                ... // We'll show any number of orders.
-              ]
-            }
+                      "symbol": "ROBO",
+                      "venue": "ROBUST",
+                      "direction": "buy",
+                      "originalQty": 85,
+                      "qty": 40,
+                      "price": 993,
+                      "orderType": "immediate-or-cancel",
+                      "id": 1,
+                      "account": "FOO123",
+                      "ts": "2015-08-10T16:10:32.987288+09:00",
+                      "fills": [
+                        {
+                          "price": 366,
+                          "qty": 45,
+                          "ts": "2015-08-10T16:10:32.987292+09:00"
+                        }
+                      ],
+                      "totalFilled": 85,
+                      "open": true
+                    },
+                    ... // We'll show any number of orders.
+                  ]
+                }
     """
     def __init__(self, venue, account, stock=None):
         super().__init__()
@@ -375,5 +379,5 @@ class Account(Endpoint):
 
         self.actions = {
             'list_all_orders': (),
-            'list_orders_by_stock': ()
+            'list_all_orders_by_stock': ()
         }

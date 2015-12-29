@@ -13,7 +13,8 @@ __author__ = 'Lorenzo'
 
 class Play:
     """
-    General class for levels. Each subclass represents a level.
+    General class for playing loop. An instance is started when a level/game
+    begins by invoking the `game.OrdersBook` constructor.
 
     """
     def __init__(self, agent):
@@ -51,14 +52,15 @@ class Play:
         """
         Coroutine invoked to fetch the endpoint.
 
-        :param object caller: the object requiring the data and in which the
-                        response's body will be stored
         :param str url: url to be hit
+        :param JSON data: POST data if needed
+        :param object caller: the object requiring the data and in which the
+               response's body will be stored
         :param str attr: the attribute's name from the caller in which the
-                        response's body will be stored
-        :param dict data: POST data if needed
+               response's body will be stored
         :return dict: response's body
         """
+        # fetch using `async_client`
         response = yield from fetch(
             url,
             data=data
@@ -93,7 +95,7 @@ class Play:
         :param str url: url to be hit
         :param str attr: the attribute's name from the caller in which the
                         response's body will be stored
-        :return: a Future
+        :param JSON payload: a JSON string with the POST payload
         """
         yield from self.play_loop.create_task(
             self.hit_endpoint(url, payload, caller, attr)

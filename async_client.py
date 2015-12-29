@@ -1,9 +1,9 @@
 # coding=utf-8
 """
-An asynchronous client usimng Tornado-AsyncIO bridge:
+An asynchronous client using Tornado-AsyncIO bridge:
 <http://www.tornadoweb.org/en/stable/asyncio.html>
 
-start Loop > run Coroutine > yield Future
+start Loop > yield Coroutine > return Future
 """
 from secret import _KEY
 

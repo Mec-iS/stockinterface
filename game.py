@@ -11,6 +11,8 @@ class Agent:
     The agent for each account/venue pair. The player plays with a given
     account number for a given venue.
     """
+    __slots__ = ('account', 'venue', 'log', )
+
     def __init__(self, account, venue):
         self.account = account    # the account number
         self.venue = venue        # the venue
@@ -43,10 +45,13 @@ class OrdersBook:
 
         The order book is the data structure that makes a stock exchange a stock
         exchange: it is two queues, ordered by priority, of all offers to buy a stock
-        ("asks") and offers to sell a stock ("bid"). In Stockfighter, most exchanges
+        ("bid") and offers to sell a stock ("ask"). In Stockfighter, most exchanges
         implement price-time priority -- a "better" price
         always gets matched before a worse price, with ties getting broken by timestamp
         of the order.
+
+    In this interface we use the OrdersBook class to place orders and keep track of
+    the state of the market.
     """
     def __init__(self, agent):
 
@@ -74,7 +79,7 @@ class OrdersBook:
 
     def list_stocks(self):
         """List the stocks available for trading on a venue and store them in
-    self.listed"""
+        `self.listed`"""
         # find the right endpoint URL
         endpoint = VenueList(
             venue=self.venue
@@ -121,10 +126,11 @@ class OrdersBook:
 
 
 class Order:
-    """A stateless class for operations on the orders book."""
+    """A stateless class representing a single order, a single action/event
+    playable by an agent."""
     params = ('stock', 'qty', 'direction', 'price', 'orderType',)
 
-    def __init__(self, orders_book, **kwargs):
+    def __init__(self, orders_book):
         """
         Construct a order to be sent.
 
@@ -139,9 +145,8 @@ class Order:
                 "orderType": kwargs(order_type)
             }
 
-        :param Agent agent:
-        :param kwargs: a dictionary with keys as expressed in `self.params`
-        :return:
+        :param OrdersBook orders_book:
+        :return: Order instance
         """
         assert isinstance(orders_book, OrdersBook)
 
