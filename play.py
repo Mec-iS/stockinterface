@@ -21,7 +21,7 @@ class Play:
         self.play = 'on'
 
     @classmethod
-    def hit_endpoint(cls, url, caller=None, attr=None):
+    def _hit_endpoint(cls, url, caller=None, attr=None):
         """
         Fetch a single url for a resource.
 
@@ -48,13 +48,15 @@ class Play:
         return read
 
     @classmethod
-    def run_async_executor(cls, queue, caller, attr):
+    def _run_async_executor(cls, queue, caller, attr):
         """
         Run multiple _response functions in a queue using a ThreadPoolExecutor.
 
         :param list queue: a list of Request(s)
         :return: bool
         """
+        # #todo: try to experiment tomorrow library (pip install tomorrow)
+        # (a decorator to Future, to implement ThreadPooExecutorl)
         from urllib.request import Request
         assert isinstance(queue, list)
         assert all(isinstance(q, Request) for q in queue)
@@ -92,9 +94,9 @@ class Play:
                         response's body will be stored
         """
         return {
-            'list': cls.run_async_executor(url, caller, attr),
-            'str': cls.hit_endpoint(url, caller, attr)
-        }.get(str(type(url)))
+            'list': cls._run_async_executor,
+            'str': cls._hit_endpoint
+        }.get(type(url).__name__)(url, caller, attr)
 
     @classmethod
     def store_response(cls, body, caller, attr):
