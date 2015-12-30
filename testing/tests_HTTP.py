@@ -2,8 +2,13 @@
 """
 Unit Tests module for Endpoints' URLs fetching
 """
+import sys
 import unittest
 from unittest import mock
+
+from endpoints import APIHeartBeat, VenueHeartBeat, Stocks
+from client import _request, _response
+from play import Play
 
 __author__ = 'Lorenzo'
 
@@ -15,67 +20,95 @@ tests = [
     ('RTS86811456', 'DTEX', 'RTY')
 ]
 
-from endpoints import APIHeartBeat
-from client import _request, _response
+
+class Test:
+    def __init__(self, account, venue, stock):
+        self.account = account
+        self.venue = venue
+        self.stock = stock
+
+
 class Test_Enpoint_APIHeartBeat(unittest.TestCase):
     def setUp(self):
         self.endpoint = APIHeartBeat()
 
     def test_should_create_endpoint(self):
         print(self.endpoint)
-        assert isinstance(self.endpoint, APIHeartBeat)
-        assert self.endpoint.url == 'https://api.stockfighter.io/ob/api/heartbeat'
+        self.assertIsInstance(self.endpoint, APIHeartBeat)
+        self.assertEqual(self.endpoint.url, 'https://api.stockfighter.io/ob/api/heartbeat')
 
     def test_should_fetch_endpoint(self):
         print('>>> heartbeating')
         body, _ = _response(_request(self.endpoint.url))
         print('>>> response: ' + str(body))
-        assert body["ok"]
+        self.assertTrue(body["ok"])
 
     def tearDown(self):
         del self.endpoint
 
 
-from endpoints import VenueHeartBeat
 class Test_Enpoint_VenueHeartBeat(unittest.TestCase):
-    tests = tests
-
     def setUp(self):
-        self.endpoint = VenueHeartBeat(tests[0][1])
+        self.t = Test(sys.argv[1],
+            sys.argv[2],
+            sys.argv[3]
+        )
+
+        self.endpoint = VenueHeartBeat(self.t.venue)
 
     def test_should_create_endpoint(self):
         print(self.endpoint)
-        assert isinstance(self.endpoint, VenueHeartBeat)
-        assert self.endpoint.url == 'https://api.stockfighter.io/ob/api/venues/SSDX/heartbeat'
+        self.assertIsInstance(self.endpoint, VenueHeartBeat)
+        self.assertEqual(
+            self.endpoint.url,
+            'https://api.stockfighter.io/ob/api/venues/{}/heartbeat'.format(self.t.venue)
+        )
 
     def tearDown(self):
         del self.endpoint
 
 
-from endpoints import Stocks
 class Test_Enpoint_Stocks(unittest.TestCase):
-    tests = tests
-
     def setUp(self):
+        self.t = Test(
+            sys.argv[1],
+            sys.argv[2],
+            sys.argv[3]
+        )
+        self.venue = self.t.venue
+        self.stock = self.t.stock
         self.endpoint = Stocks(
-            venue=tests[0][1],
-            stock=tests[0][2]
+            venue=self.t.venue,
+            stock=self.t.stock
         )
 
     def test_should_create_endpoint(self):
-        assert self.endpoint.venue == tests[0][1] and self.endpoint.stock == tests[0][2]
-        assert all(getattr(self.endpoint, v[0], None) for v in self.endpoint.actions)
+        self.assertTrue(self.endpoint.venue == self.venue and self.endpoint.stock == self.stock)
+        self.assertTrue(all(getattr(self.endpoint, v[0], None) for v in self.endpoint.actions))
         print(self.endpoint)
+
+    def test_should_return_orders_by_stock(self):
+        Play.dispatch(
+            caller=None,
+            url=self.endpoint.orders_by_stock
+        )
+
+    def test_should_return_quote_for_a_stock(self):
+        Play.dispatch(None, self.endpoint.orders_by_stock)
 
     def tearDown(self):
         del self.endpoint
 
 
-def suite():
+def suite(**kwargs):
     s = unittest.TestSuite()
     s.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(Test_Enpoint_APIHeartBeat))
-    s.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(Test_Enpoint_VenueHeartBeat))
-    s.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(Test_Enpoint_Stocks))
+    s.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(
+        Test_Enpoint_VenueHeartBeat
+    ))
+    s.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(
+        Test_Enpoint_Stocks
+    ))
     return s
 
 

@@ -36,8 +36,8 @@ class Test_Agent_Order(unittest.TestCase):
     def test_should_create_agent(self):
         agent = self.agent
         print(agent)
-        assert agent.account == self.tests[0][0]
-        assert agent.venue == self.tests[0][1]
+        self.assertEqual(agent.account, self.tests[0][0])
+        self.assertEqual(agent.venue, self.tests[0][1])
 
     def test_should_create_orders_book(self):
         orders_book = self.orders_book
@@ -46,9 +46,9 @@ class Test_Agent_Order(unittest.TestCase):
     def test_should_create_order(self):
         order = self.order
         print(order)
-        assert order.agent == self.agent
-        assert order.account == self.agent.account
-        assert order.venue == self.agent.venue
+        self.assertEqual(order.agent, self.agent)
+        self.assertEqual(order.account, self.agent.account)
+        self.assertEqual(order.venue, self.agent.venue)
 
     @classmethod
     def tearDownClass(cls):
